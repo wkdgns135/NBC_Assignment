@@ -61,6 +61,7 @@ Animal* createRandomAnimal(){
 }
 
 int main() {
+    srand((unsigned int)time(NULL));
 
     Zoo zoo;
     for (int i = 0; i < 10; i++) {
