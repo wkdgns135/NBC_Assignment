@@ -15,7 +15,9 @@ AMyActor::AMyActor()
 void AMyActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	Pos = Start;
+	for (int i = 0; i < 10; i++)Move();
+	PrintTotal();
 }
 
 // Called every frame
@@ -27,20 +29,38 @@ void AMyActor::Tick(float DeltaTime)
 
 float AMyActor::Distance(const FVector2D& a, const FVector2D& b)
 {
-	return 0.0f;
+	return sqrt(pow((b.X - a.X), 2) + pow((b.Y - b.X), 2));
 }
 
 void AMyActor::Move()
 {
+	FVector2D PrevPos = Pos;
+	Pos = { Pos.X + Step() , Pos.Y + Step() };
+	UE_LOG(LogTemp, Display, TEXT("Move Position : (%d, %d), Distance : %f"), (int)Pos.X, (int)Pos.Y, Distance(PrevPos, Pos));
+
+	if (CreateEvent())EventFunction();
 }
 
 uint32 AMyActor::Step()
 {
-	return uint32();
+	return FMath::RandRange(0, 1);
 }
 
-uint32 AMyActor::CreateEvent()
+bool AMyActor::CreateEvent()
 {
-	return uint32();
+	return FMath::RandRange(1, 100) > 50;
 }
+
+void AMyActor::EventFunction()
+{
+	UE_LOG(LogTemp, Display, TEXT("Event Triggered"));
+	EventCount++;
+}
+
+void AMyActor::PrintTotal()
+{
+	UE_LOG(LogTemp, Display, TEXT("Total move distance : %f"), Distance(Start, Pos));
+	UE_LOG(LogTemp, Display, TEXT("Total event count : %d"), EventCount);
+}
+
 

@@ -26,12 +26,14 @@ public:
 
 private :
 	FVector2D Start;
+	FVector2D Pos;
 	uint32 EventCount;
-	uint32 TotalDistance;
 
 public:
 	float Distance(const FVector2D& a, const FVector2D& b);
 	void Move();
 	uint32 Step();
-	uint32 CreateEvent();
+	bool CreateEvent();
+	void EventFunction();
+	void PrintTotal();
 };
