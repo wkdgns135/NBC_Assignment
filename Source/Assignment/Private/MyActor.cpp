@@ -38,17 +38,14 @@ void AMyActor::Move()
 	Pos = { Pos.X + Step() , Pos.Y + Step() };
 	UE_LOG(LogTemp, Display, TEXT("Move Position : (%d, %d), Distance : %f"), (int)Pos.X, (int)Pos.Y, Distance(PrevPos, Pos));
 
-	if (CreateEvent())EventFunction();
+	if (Step()) { // 0 or 1
+		EventFunction();
+	}
 }
 
 uint32 AMyActor::Step()
 {
 	return FMath::RandRange(0, 1);
-}
-
-bool AMyActor::CreateEvent()
-{
-	return FMath::RandRange(1, 100) > 50;
 }
 
 void AMyActor::EventFunction()

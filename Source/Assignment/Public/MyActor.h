@@ -33,7 +33,6 @@ public:
 	float Distance(const FVector2D& a, const FVector2D& b);
 	void Move();
 	uint32 Step();
-	bool CreateEvent();
 	void EventFunction();
 	void PrintTotal();
 };
