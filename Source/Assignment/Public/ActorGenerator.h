@@ -20,9 +20,9 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	UPROPERTY(EditAnywhere) int Width;
-	UPROPERTY(EditAnywhere) int Height;
-	UPROPERTY(EditAnywhere) int MinPatrolRange;
+	UPROPERTY(EditAnywhere, Category = "Properties") int Width;
+	UPROPERTY(EditAnywhere, Category = "Properties") int Height;
+	UPROPERTY(EditAnywhere, Category = "Properties") int MinPatrolRange;
 	
 	void GenerateActor();
 
