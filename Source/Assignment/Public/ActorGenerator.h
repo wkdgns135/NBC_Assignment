@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "DynamicActor.h"
+#include "PatrolActor.h"
 #include "ActorGenerator.generated.h"
 
 UCLASS()
@@ -25,5 +26,8 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Properties") int MinPatrolRange;
 	
 	void GenerateActor();
-
+	void InitializeGrid(TArray<TArray<TPair<EDirection, int>>>& Grid);
+	void SetupGraph(TArray<TArray<TPair<EDirection, int>>>& Grid, TMap<TPair<int, int>, TArray<TPair<int, int>>>& Graph);
+	bool FindPath(const TMap<TPair<int, int>, TArray<TPair<int, int>>>& Graph, TArray<TPair<int, int>>& Path);
+	void SpawnActorsAlongPath(const TArray<TPair<int, int>>& Path, const TArray<TArray<TPair<EDirection, int>>>& Grid);
 };

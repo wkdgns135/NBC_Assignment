@@ -7,36 +7,45 @@
 // Sets default values
 AActorGenerator::AActorGenerator()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
+    // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+    PrimaryActorTick.bCanEverTick = true;
 }
 
 // Called when the game starts or when spawned
 void AActorGenerator::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
     GenerateActor();
 }
 
-void PrintGrid(const TArray<TArray<float>>& Grid)
+// Called every frame
+void AActorGenerator::Tick(float DeltaTime)
 {
-    for (const TArray<float>& Row : Grid) {
-        FString RowString;
-        for (float Cell : Row) {
-            RowString += FString::Printf(TEXT("%.2f "), Cell); // 소수점 두 자리 출력
-        }
-        UE_LOG(LogTemp, Warning, TEXT("%s"), *RowString);
-    }
+    Super::Tick(DeltaTime);
 }
 
 void AActorGenerator::GenerateActor()
 {
-    // 랜덤 시드 초기화
-    FMath::RandInit(FDateTime::Now().GetTicks());
     TArray<TArray<TPair<EDirection, int>>> Grid;
+    InitializeGrid(Grid);
 
-    // 2D 배열을 랜덤으로 채우기
+    TMap<TPair<int, int>, TArray<TPair<int, int>>> Graph;
+    SetupGraph(Grid, Graph);
+
+    TArray<TPair<int, int>> Path;
+    if (FindPath(Graph, Path))
+    {
+        SpawnActorsAlongPath(Path, Grid);
+    }
+    else
+    {
+        GenerateActor(); // 경로를 못찾으면 재귀
+    }
+}
+
+void AActorGenerator::InitializeGrid(TArray<TArray<TPair<EDirection, int>>>& Grid)
+{
+    FMath::RandInit(FDateTime::Now().GetTicks());
     TArray<TArray<int>> Offset = { {1, 0}, {0, -1}, {0, 1}, {-1, 0} };
     for (int i = 0; i < Height; i++) {
         TArray<TPair<EDirection, int>> Row;
@@ -52,12 +61,10 @@ void AActorGenerator::GenerateActor()
         }
         Grid.Add(Row);
     }
+}
 
-    TPair<int, int> Start = { 0, Width / 2 };
-    TPair<int, int> End = { Height - 1, Width / 2 };
-
-    // 노드 간의 연결 설정
-    TMap<TPair<int, int>, TArray<TPair<int, int>>> Graph;
+void AActorGenerator::SetupGraph(TArray<TArray<TPair<EDirection, int>>>& Grid, TMap<TPair<int, int>, TArray<TPair<int, int>>>& Graph)
+{
     for (int y = 0; y < Height; y++) {
         for (int x = 0; x < Width; x++) {
             TPair<EDirection, int> Node = Grid[y][x];
@@ -98,9 +105,13 @@ void AActorGenerator::GenerateActor()
             Graph.Add({ y, x }, Neighbors);
         }
     }
+}
 
-    // BFS를 사용하여 경로 찾기
-    TArray<TPair<int, int>> Path;
+bool AActorGenerator::FindPath(const TMap<TPair<int, int>, TArray<TPair<int, int>>>& Graph, TArray<TPair<int, int>>& Path)
+{
+    TPair<int, int> Start = { 0, Width / 2 };
+    TPair<int, int> End = { Height - 1, Width / 2 };
+
     TMap<TPair<int, int>, TPair<int, int>> CameFrom;
     TArray<TArray<bool>> Visited;
     Visited.SetNum(Height);
@@ -131,13 +142,10 @@ void AActorGenerator::GenerateActor()
         }
     }
 
-    // 경로를 못찾으면 재귀
     if (!bPathFound) {
-        GenerateActor();
-        return;
+        return false;
     }
 
-    // 경로 추출
     TPair<int, int> Current = End;
     while (Current != Start) {
         Path.Add(Current);
@@ -146,17 +154,21 @@ void AActorGenerator::GenerateActor()
     Path.Add(Start);
     Algo::Reverse(Path);
 
+    return true;
+}
+
+void AActorGenerator::SpawnActorsAlongPath(const TArray<TPair<int, int>>& Path, const TArray<TArray<TPair<EDirection, int>>>& Grid)
+{
     int Scale = 1000;
     FVector ForwardVector = GetActorForwardVector();
     FVector RightVector = GetActorRightVector();
     FVector StartLocation = GetActorLocation();
 
-    // 경로에 따라 액터 생성 및 위치 설정
     float PrevSpeed = 0;
     for (const TPair<int, int>& Node : Path) {
         int Y = Node.Key;
         int X = Node.Value;
-        
+
         float Range = Grid[Y][X].Value * Scale;
         float Speed = FMath::RandRange(100, Scale);
 
@@ -175,16 +187,13 @@ void AActorGenerator::GenerateActor()
             Actor = PatrolActor;
         }
 
-        // 위치 설정
         X -= Width / 2;
         FVector Location = StartLocation + ForwardVector * Y * Scale + RightVector * X * Scale;
         Actor->SetActorLocation(Location);
-        
+
         PrevSpeed = Speed;
     }
 }
-
-
 
 /*
 void AActorGenerator::GenerateActor()
@@ -265,11 +274,4 @@ void AActorGenerator::GenerateActor()
     PrintGrid(Grid);
 }
 */
-
-// Called every frame
-void AActorGenerator::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
 
