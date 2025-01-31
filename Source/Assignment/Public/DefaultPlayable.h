@@ -24,7 +24,7 @@ public:
 	virtual void Look(const FInputActionValue& Value) override;
 
 private:
-	UPROPERTY(EditAnywhere, Category = "Physics") float JumpScale;
+	UPROPERTY(EditAnywhere, Category = "Physics") float JumpScalar;
 	UPROPERTY(EditAnywhere, Category = "Physics") float SprintSpeed;
 	float OriginSpeed;
 

@@ -69,7 +69,6 @@ void APlayable::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	AddGravity();
-	AddDrag();
 	Integration(DeltaTime);
 	HandleCollision(DeltaTime);
 	UpdatePosition(DeltaTime);
@@ -83,7 +82,7 @@ void APlayable::AddForce(FVector ExternalForce)
 
 void APlayable::InitConstant() 
 {
-	MoveSpeed = 1000;
+	MoveScalar = 1000;
 	Mass = 1;
 	Drag = 0.9f;
 	Gravity = 980;
@@ -97,21 +96,14 @@ void APlayable::AddGravity()
 	AddForce(GravityForce);
 }
 
-void APlayable::AddDrag()
-{
-	// 속도의 제곱에 비례하는 항력 적용
-	FVector DragForce = -Drag * Velocity.SizeSquared() * Velocity.GetSafeNormal();
-	AddForce(DragForce);
-}
-
 void APlayable::Integration(float DeltaTime)
 {
-	// NOTE: Semi-implicit Euler integration 
-	// https://en.wikipedia.org/wiki/Semi-implicit_Euler_method 참조
-
 	// 가속도 계산 (F = ma)
 	FVector Acceleration = Force * (1 / Mass);
 	Velocity += Acceleration * DeltaTime;
+
+	// 항력 추가 https://code.google.com/archive/p/bullet/issues/74 참조
+	Velocity *= FMath::Pow(1 - Drag, DeltaTime);
 
 	// 작은 속도는 0으로 설정
 	if (Velocity.SizeSquared() < 0.1f)
@@ -123,6 +115,7 @@ void APlayable::Integration(float DeltaTime)
 }
 
 void APlayable::HandleCollision(float DeltaTime) {
+	if (Velocity.IsNearlyZero()) return;
 	TArray<FHitResult> HitResults;
 	FCollisionQueryParams CollisionParams;
 	CollisionParams.AddIgnoredActor(this);
@@ -158,7 +151,7 @@ void APlayable::HandleCollision(float DeltaTime) {
 	//	1.0f                         // 선 두께
 	//);
 
-	for (FHitResult HitResult : HitResults) {
+	for (const FHitResult &HitResult : HitResults) {
 		FVector ImpactNormal = HitResult.ImpactNormal;
 		float DotProduct = FVector::DotProduct(Velocity, ImpactNormal);
 

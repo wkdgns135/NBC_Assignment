@@ -43,7 +43,7 @@ public:
 	void AddForce(FVector ExternalForce);
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "Physics") float MoveSpeed;
+	UPROPERTY(EditAnywhere, Category = "Physics") float MoveScalar;
 	UPROPERTY(EditAnywhere, Category = "Physics") float Mass;
 	UPROPERTY(EditAnywhere, Category = "Physics") float Drag;
 	UPROPERTY(EditAnywhere, Category = "Physics") float Gravity;
@@ -56,7 +56,9 @@ private:
 
 	void InitConstant();
 	void AddGravity();
-	void AddDrag();
+
+	// NOTE: Semi-implicit Euler integration 
+	// https://en.wikipedia.org/wiki/Semi-implicit_Euler_method ÂüÁ¶
 	void Integration(float DeltaTime);
 	void HandleCollision(float DeltaTime);
 	void UpdatePosition(float DeltaTime);

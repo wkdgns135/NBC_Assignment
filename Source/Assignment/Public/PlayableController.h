@@ -26,6 +26,8 @@ public:
 	UInputAction* LookAction;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	UInputAction* ShiftAction;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	UInputAction* RollAction;
 
 	virtual void BeginPlay() override;
 };

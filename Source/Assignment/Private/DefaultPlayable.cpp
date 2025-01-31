@@ -8,7 +8,8 @@ ADefaultPlayable::ADefaultPlayable()
 {
 	bUseGravity = true;
 	Drag = 0.99f;
-	SprintSpeed = 1500;
+	MoveScalar = 1500;
+	SprintSpeed = 3000;
 }
 
 void ADefaultPlayable::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -31,7 +32,7 @@ void ADefaultPlayable::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 void ADefaultPlayable::BeginPlay()
 {
     Super::BeginPlay();
-	OriginSpeed = MoveSpeed;
+	OriginSpeed = MoveScalar;
 }
 
 void ADefaultPlayable::Move(const FInputActionValue& Value)
@@ -44,7 +45,7 @@ void ADefaultPlayable::Move(const FInputActionValue& Value)
 
 	// 입력에 따라 이동 벡터 계산
 	FVector InputForce = Forward * MoveInput.X + Right * MoveInput.Y;
-	InputForce = InputForce.GetSafeNormal() * MoveSpeed;
+	InputForce = InputForce.GetSafeNormal() * MoveScalar;
 
 	//공중에서 속력 제한
 	if (!bIsGround) {
@@ -73,7 +74,7 @@ void ADefaultPlayable::Look(const FInputActionValue& Value)
 
 void ADefaultPlayable::ReleaseShift(const FInputActionValue& Value)
 {
-	MoveSpeed = OriginSpeed;
+	MoveScalar = OriginSpeed;
 }
 
 
@@ -81,11 +82,11 @@ void ADefaultPlayable::PressSpace(const FInputActionValue& Value)
 {
     if (bIsGround) {
         bIsGround = false;
-        AddForce({ 0,0,JumpScale });
+        AddForce({ 0,0,JumpScalar * Mass });
     }
 }
 
 void ADefaultPlayable::PressShift(const FInputActionValue& Value)
 {
-	MoveSpeed = SprintSpeed;
+	MoveScalar = SprintSpeed;
 }
