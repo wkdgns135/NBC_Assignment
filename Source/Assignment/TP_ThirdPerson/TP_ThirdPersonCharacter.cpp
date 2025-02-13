@@ -10,28 +10,23 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Components/WidgetComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "MyHUD.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
-//////////////////////////////////////////////////////////////////////////
-// ATP_ThirdPersonCharacter
-
 ATP_ThirdPersonCharacter::ATP_ThirdPersonCharacter()
 {
-	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 		
-	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
-	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
 
-	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
-	// instead of recompiling to adjust them
 	GetCharacterMovement()->JumpZVelocity = 700.f;
 	GetCharacterMovement()->AirControl = 0.35f;
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
@@ -39,29 +34,45 @@ ATP_ThirdPersonCharacter::ATP_ThirdPersonCharacter()
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
-	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
 	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
 
-	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
+	OverheadWidget->SetupAttachment(GetCapsuleComponent());
+	OverheadWidget->SetWidgetSpace(EWidgetSpace::Screen);
+
+	MaxHealth = 100;
 }
 
 void ATP_ThirdPersonCharacter::BeginPlay()
 {
-	// Call the base class  
 	Super::BeginPlay();
+	Health = MaxHealth;
+	OnHealthChanged.Broadcast(Health);
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Input
+float ATP_ThirdPersonCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	// 기본 데미지 처리 로직 호출 (필수는 아님)
+	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	AddHealth(-DamageAmount);
+
+	// 체력이 0 이하가 되면 사망 처리
+	if (Health <= 0.0f)
+	{
+		UGameplayStatics::OpenLevel(GetWorld(), "GameOverLevel");
+	}
+
+	// 실제 적용된 데미지를 반환
+	return ActualDamage;
+}
 
 void ATP_ThirdPersonCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -86,6 +97,8 @@ void ATP_ThirdPersonCharacter::SetupPlayerInputComponent(UInputComponent* Player
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATP_ThirdPersonCharacter::Look);
+
+		EnhancedInputComponent->BindAction(EscAction, ETriggerEvent::Started, this, &ATP_ThirdPersonCharacter::ShowMenu);
 	}
 	else
 	{
@@ -106,9 +119,15 @@ void ATP_ThirdPersonCharacter::Move(const FInputActionValue& Value)
 
 		// get forward vector
 		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	
+
 		// get right vector 
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+		// Reverse control if the effect is active
+		if (bIsControlReversed)
+		{
+			MovementVector *= -1;
+		}
 
 		// add movement 
 		AddMovementInput(ForwardDirection, MovementVector.Y);
@@ -127,4 +146,72 @@ void ATP_ThirdPersonCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void ATP_ThirdPersonCharacter::ShowMenu(const FInputActionValue& Value)
+{
+	Cast<AMyHUD>(GetWorld()->GetFirstPlayerController()->GetHUD())->ShowMenu();
+}
+
+void ATP_ThirdPersonCharacter::AddHealth(int32 Value)
+{
+	Health = FMath::Clamp(Health + Value, 0, MaxHealth);
+	OnHealthChanged.Broadcast(Health);
+}
+
+void ATP_ThirdPersonCharacter::ApplySlow(float SlowAmount, float Duration)
+{
+	OriginalSpeed = GetCharacterMovement()->MaxWalkSpeed;
+	GetCharacterMovement()->MaxWalkSpeed *= SlowAmount;
+	GetWorldTimerManager().SetTimer(SlowEffectTimerHandle, this, &ATP_ThirdPersonCharacter::RestoreOriginalSpeed, Duration, false);
+}
+
+void ATP_ThirdPersonCharacter::RestoreOriginalSpeed()
+{
+	GetCharacterMovement()->MaxWalkSpeed = OriginalSpeed;
+}
+
+void ATP_ThirdPersonCharacter::ApplyBlind(float Duration)
+{
+	if (bIsBlinded) {
+		GetWorldTimerManager().ClearTimer(BlindEffectTimerHandle);
+		GetWorldTimerManager().SetTimer(BlindEffectTimerHandle, this, &ATP_ThirdPersonCharacter::EndBlindEffect, Duration, false);
+		return;
+	}
+
+	bIsBlinded = true;
+
+	if (BlindEffectWidget)
+	{
+		BlindEffectWidget->AddToViewport();
+	}
+	
+	GetWorldTimerManager().SetTimer(BlindEffectTimerHandle, this, &ATP_ThirdPersonCharacter::EndBlindEffect, Duration, false);
+}
+
+void ATP_ThirdPersonCharacter::EndBlindEffect()
+{
+
+	if (BlindEffectWidget)
+	{
+		BlindEffectWidget->RemoveFromViewport();
+	}
+	
+	bIsBlinded = false;
+}
+
+void ATP_ThirdPersonCharacter::ApplyReverseControl(float Duration)
+{
+	if (bIsControlReversed) {
+		GetWorldTimerManager().ClearTimer(ReverseControlEffectTimerHandle);
+		GetWorldTimerManager().SetTimer(ReverseControlEffectTimerHandle, this, &ATP_ThirdPersonCharacter::EndReverseControlEffect, Duration, false);
+		return;
+	}
+	bIsControlReversed = true;
+	GetWorldTimerManager().SetTimer(ReverseControlEffectTimerHandle, this, &ATP_ThirdPersonCharacter::EndReverseControlEffect, Duration, false);
+}
+
+void ATP_ThirdPersonCharacter::EndReverseControlEffect()
+{
+	bIsControlReversed = false;
 }

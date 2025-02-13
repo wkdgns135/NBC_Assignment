@@ -15,26 +15,23 @@ ASpawnVolume::ASpawnVolume()
 	NegativeItemDataTable = nullptr;
 }
 
-AActor * ASpawnVolume::SpawnRandomItem(bool bIsSpawnPositiveItem)
+ABaseItem* ASpawnVolume::SpawnRandomItem(bool bIsSpawnPositiveItem)
 {
-	if (FItemSpawnRow* SelectedRow = GetRandomItem(bIsSpawnPositiveItem ? PositiveItemDataTable : NegativeItemDataTable))
+	FItemSpawnRow* SelectedRow = GetRandomItem(bIsSpawnPositiveItem ? PositiveItemDataTable : NegativeItemDataTable);
+	if (SelectedRow)
 	{
-		if (UClass* ActualClass = SelectedRow->ItemClass.Get())
-		{
-			// 여기서 SpawnItem()을 호출하고, 스폰된 AActor 포인터를 리턴
-			return SpawnItem(ActualClass);
-		}
+		return SpawnItem(SelectedRow->ItemClass);
 	}
 
 	return nullptr;
 }
 
-FItemSpawnRow* ASpawnVolume::GetRandomItem(UDataTable *ItemDataTable) const
+FItemSpawnRow* ASpawnVolume::GetRandomItem(UDataTable* ItemDataTable) const
 {
 	if (!ItemDataTable) return nullptr;
 
 	TArray<FItemSpawnRow*> AllRows;
-	static const FString ContextString(TEXT("ItemSpawnContext"));
+	static const FString ContextString(TEXT("ItemSpawnRow"));
 	ItemDataTable->GetAllRows(ContextString, AllRows);
 
 	if (AllRows.IsEmpty()) return nullptr;
@@ -76,16 +73,43 @@ FVector ASpawnVolume::GetRandomPointInVolume() const
 	);
 }
 
-AActor* ASpawnVolume::SpawnItem(TSubclassOf<AActor> ItemClass)
+ABaseItem* ASpawnVolume::GetObject(TSubclassOf<ABaseItem> ItemClass)
+{
+	ABaseItem* NewItem = nullptr;
+	if (ObjectPools.Contains(ItemClass)) {
+		if (!ObjectPools[ItemClass]->IsEmpty())
+		{
+			ObjectPools[ItemClass]->Dequeue(NewItem);
+			return NewItem;
+		}
+	}
+	else {
+		ObjectPools.Add(ItemClass, new TQueue<ABaseItem*>());
+	}
+
+	NewItem = GetWorld()->SpawnActor<ABaseItem>(ItemClass);
+	if (NewItem) {
+		NewItem->Activate();
+		NewItem->SetPool(ObjectPools[ItemClass]);
+	}
+	return NewItem;
+}
+
+void ASpawnVolume::ReturnObject(ABaseItem* Object)
+{
+	if (Object)
+	{
+		Object->Deactivate();
+	}
+}
+
+ABaseItem* ASpawnVolume::SpawnItem(TSubclassOf<ABaseItem> ItemClass)
 {
 	if (!ItemClass) return nullptr;
 
-	// SpawnActor가 성공하면 스폰된 액터의 포인터가 반환됨
-	AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(
-		ItemClass,
-		GetRandomPointInVolume(),
-		FRotator::ZeroRotator
-	);
+	// 풀에서 오브젝트를 가져옴
+	ABaseItem* BaseItem = GetObject(ItemClass);
+	BaseItem->Initialize(GetRandomPointInVolume(), FRotator::ZeroRotator);
 
-	return SpawnedActor;
+	return BaseItem;
 }

@@ -9,9 +9,9 @@
 
 class ABaseItem;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWaveChanged, int32, NewWave);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnScoreChanged, int32, NewScore);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTimeChanged, float, RemainingTime);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnWaveChanged, int32);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnScoreChanged, int32);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnTimeChanged, int32);
 
 UCLASS()
 class ASSIGNMENT_API AMyGameState : public AGameState
@@ -22,17 +22,14 @@ public:
 	AMyGameState();
 	virtual void BeginPlay() override;
 
-	UPROPERTY(BlueprintAssignable, Category = "GameState")
-	FOnWaveChanged OnWaveChanged;
-	UPROPERTY(BlueprintAssignable, Category = "GameState")
-	FOnScoreChanged OnScoreChanged;
-	UPROPERTY(BlueprintAssignable, Category = "GameState")
-	FOnTimeChanged OnTimeChanged;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wave")
 	UDataTable* WaveDataTable;
 	UPROPERTY(EditAnywhere, Category = "Wave")
-
 	TSubclassOf<ABaseItem> CoinClass;
+
+	FOnWaveChanged OnWaveChanged;
+	FOnScoreChanged OnScoreChanged;
+	FOnTimeChanged OnTimeChanged;
 	FWaveDataRow* CurrentWaveData;
 	FTimerHandle LevelTimerHandle;
 	int32 CurrentWaveIndex;
@@ -50,6 +47,11 @@ public:
 	void InitWave();
 	void StartWave();
 	void OnWaveTimeUp();
+	void OnTimerTick();
 	void OnCoinCollected();
 	void EndWave();
+
+private:
+	class ASpawnVolume *SpawnVolume;
+	int32 CurrentTime;
 };

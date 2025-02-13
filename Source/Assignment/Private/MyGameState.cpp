@@ -9,13 +9,24 @@ AMyGameState::AMyGameState()
 	SpawnedCoinCount = 0;
 	CollectedCoinCount = 0;
 	CurrentWaveIndex = 0;
+	CurrentTime = 0;
 }
 
 void AMyGameState::BeginPlay()
 {
 	Super::BeginPlay();
+
+	
+	TArray<AActor*> FoundVolumes;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnVolume::StaticClass(), FoundVolumes);
+	if (!FoundVolumes.IsEmpty()) {
+		SpawnVolume = Cast<ASpawnVolume>(FoundVolumes[0]);
+	}
+
 	InitWave();
 	StartWave();
+	OnScoreChanged.Broadcast(Score);
+	OnWaveChanged.Broadcast(CurrentWaveIndex + 1);
 }
 
 int32 AMyGameState::GetScore() const
@@ -43,46 +54,59 @@ void AMyGameState::StartWave()
 	SpawnedCoinCount = 30;
 	CollectedCoinCount = 30;
 
-	TArray<AActor*> FoundVolumes;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnVolume::StaticClass(), FoundVolumes);
-
-	if (!FoundVolumes.IsEmpty()) {
-		ASpawnVolume* SpawnVolume = Cast<ASpawnVolume>(FoundVolumes[0]);
-		if (SpawnVolume) {
-			for (int32 i = 0; i < CurrentWaveData->PositiveItem; i++)
+	if (SpawnVolume) {
+		for (int32 i = 0; i < CurrentWaveData->PositiveItem; i++)
+		{
+			AActor* SpawnedActor = SpawnVolume->SpawnRandomItem(true);
+		}
+		for (int32 i = 0; i < CurrentWaveData->NegativeItem; i++)
+		{
+			AActor* SpawnedActor = SpawnVolume->SpawnRandomItem(false);
+		}
+		for (int32 i = 0; i < CurrentWaveData->CoinSpawn; i++)
+		{
+			AActor* SpawnedActor = SpawnVolume->SpawnItem(CoinClass);
+			if (SpawnedActor)
 			{
-				AActor* SpawnedActor = SpawnVolume->SpawnRandomItem(true);
-			}
-			for (int32 i = 0; i < CurrentWaveData->NegativeItem; i++)
-			{
-				AActor* SpawnedActor = SpawnVolume->SpawnRandomItem(false);
-			}
-			for (int32 i = 0; i < CurrentWaveData->CoinSpawn; i++)
-			{
-				AActor* SpawnedActor = SpawnVolume->SpawnItem(CoinClass->StaticClass());
-				if (SpawnedActor)
-				{
-					int32 CoinValue = FMath::RandRange(CurrentWaveData->CoinValueRange.X, CurrentWaveData->CoinValueRange.Y);
-					Cast<AItemCoin>(SpawnedActor)->SetPointValue(CoinValue);
-				}
+				int32 CoinValue = FMath::RandRange(CurrentWaveData->CoinValueRange.X, CurrentWaveData->CoinValueRange.Y);
+				Cast<AItemCoin>(SpawnedActor)->SetPointValue(CoinValue);
 			}
 		}
 	}
-
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, FString::Printf(TEXT("Wave : %d Start"), CurrentWaveIndex + 1));
 
 	GetWorldTimerManager().SetTimer(
 		LevelTimerHandle,
 		this,
-		&AMyGameState::OnWaveTimeUp,
-		CurrentWaveData->WaveDuration,
+		&AMyGameState::OnTimerTick,
+		1,
 		false
 	);
 }
 
 void AMyGameState::OnWaveTimeUp()
 {
+	CurrentTime = 0;
 	EndWave();
+}
+
+void AMyGameState::OnTimerTick()
+{
+	CurrentTime++;
+	OnTimeChanged.Broadcast(CurrentWaveData->WaveDuration - CurrentTime);
+
+	if (CurrentTime == CurrentWaveData->WaveDuration) {
+		OnWaveTimeUp();
+	}
+	else {
+		GetWorldTimerManager().SetTimer(
+			LevelTimerHandle,
+			this,
+			&AMyGameState::OnTimerTick,
+			1,
+			false
+		);
+	}
 }
 
 void AMyGameState::OnCoinCollected()
@@ -104,7 +128,7 @@ void AMyGameState::EndWave()
 	GetWorldTimerManager().ClearTimer(LevelTimerHandle);
 
 	CurrentWaveIndex++;
-	OnWaveChanged.Broadcast(CurrentWaveIndex);
+	OnWaveChanged.Broadcast(CurrentWaveIndex + 1);
 
 	if (CurrentWaveIndex >= WaveDataTable->GetRowNames().Num()) {
 		OnGameOver();
@@ -117,5 +141,5 @@ void AMyGameState::EndWave()
 
 void AMyGameState::OnGameOver()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Game Over!!"));
+	UGameplayStatics::OpenLevel(GetWorld(), "GameOverLevel");
 }

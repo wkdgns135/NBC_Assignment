@@ -1,5 +1,7 @@
 #include "BaseItem.h"
+#include "Kismet/GameplayStatics.h"
 #include "Components/SphereComponent.h"
+#include "Particles/ParticleSystemComponent.h"
 
 ABaseItem::ABaseItem()
 {
@@ -51,7 +53,36 @@ void ABaseItem::OnItemEndOverlap(
 
 void ABaseItem::ActivateItem(AActor* Activator)
 {
-    GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, FString::Printf(TEXT("Overlap!!")));
+    TWeakObjectPtr<UParticleSystemComponent> Particle = nullptr;
+
+    if (PickupParticle)
+    {
+        Particle = UGameplayStatics::SpawnEmitterAtLocation(
+            GetWorld(),
+            PickupParticle,
+            GetActorLocation(),
+            GetActorRotation(),
+            true
+        );
+    }
+
+    if (Particle != nullptr)
+    {
+        FTimerHandle DestroyParticleTimerHandle;
+
+        GetWorld()->GetTimerManager().SetTimer(
+            DestroyParticleTimerHandle,
+            [Particle]()
+            {
+                if (Particle != nullptr) 
+                {
+                    Particle->DestroyComponent();
+                }
+            },
+            2.0f,
+            false
+        );
+    }
 }
 
 FName ABaseItem::GetItemType() const
@@ -59,7 +90,25 @@ FName ABaseItem::GetItemType() const
     return ItemType;
 }
 
-void ABaseItem::DestroyItem()
+void ABaseItem::Activate()
 {
-    Destroy();
+    IsActive = true;
+    SetActorHiddenInGame(false);
+    SetActorEnableCollision(true);
+    SetActorTickEnabled(true);
+}
+
+void ABaseItem::Deactivate()
+{
+    IsActive = false;
+    SetActorHiddenInGame(true);
+    SetActorEnableCollision(false);
+    SetActorTickEnabled(false);
+    _Pool->Enqueue(this);
+}
+
+void ABaseItem::Initialize(FVector Pos, FRotator Rotation)
+{
+    SetActorLocation(Pos);
+    SetActorRotation(Rotation);
 }

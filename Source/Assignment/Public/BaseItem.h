@@ -13,6 +13,10 @@ class ASSIGNMENT_API ABaseItem : public AActor, public IItemInterface
 public:
     ABaseItem();
 
+private:
+    bool IsActive;
+    TQueue<ABaseItem*> *_Pool;
+
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
     FName ItemType;
@@ -25,6 +29,8 @@ protected:
     // 아이템의 시각적 표현을 담당하는 스태틱 메시
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item|Component")
     UStaticMeshComponent* StaticMesh;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Effects")
+    UParticleSystem* PickupParticle;
 
     virtual void OnItemOverlap(
         UPrimitiveComponent* OverlappedComp,
@@ -39,7 +45,13 @@ protected:
         UPrimitiveComponent* OtherComp,
         int32 OtherBodyIndex) override;
     virtual void ActivateItem(AActor* Activator) override;
-    virtual FName GetItemType() const override;
 
-    void DestroyItem();
+public:
+    virtual FName GetItemType() const override;
+    virtual void Activate();
+    virtual void Deactivate();
+    virtual void Initialize(FVector Pos, FRotator Rotation);
+
+    FORCEINLINE bool GetIsActive() const { return IsActive; }
+    FORCEINLINE void SetPool(TQueue<ABaseItem*>* Pool) { _Pool = Pool; }
 };

@@ -11,63 +11,76 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class UWidgetComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnHealthChanged, float);
 
 UCLASS(config=Game)
 class ATP_ThirdPersonCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* CameraBoom;
-
-	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
-	
-	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputMappingContext* DefaultMappingContext;
-
-	/** Jump Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* JumpAction;
-
-	/** Move Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* MoveAction;
-
-	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* EscAction;
 
 public:
 	ATP_ThirdPersonCharacter();
 	
+private:
+	UPROPERTY(EditAnywhere);
+	int32 Health;
+	UPROPERTY(EditAnywhere);
+	int32 MaxHealth;
+	UPROPERTY(EditAnywhere)
+	UUserWidget* BlindEffectWidget;
+	UPROPERTY(EditAnywhere)
+	UWidgetComponent* OverheadWidget;
+
+	float OriginalSpeed;
+	bool bIsBlinded;
+	bool bIsControlReversed;
+
+	FTimerHandle SlowEffectTimerHandle;
+	FTimerHandle BlindEffectTimerHandle;
+	FTimerHandle ReverseControlEffectTimerHandle;
+
+	void RestoreOriginalSpeed();
+	void EndBlindEffect();
+	void EndReverseControlEffect();
 
 protected:
-
-	/** Called for movement input */
-	void Move(const FInputActionValue& Value);
-
-	/** Called for looking input */
-	void Look(const FInputActionValue& Value);
-			
-
-protected:
-	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
-	// To add mapping context
-	virtual void BeginPlay();
+	virtual void BeginPlay() override;
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	void Move(const FInputActionValue& Value);
+	void Look(const FInputActionValue& Value);
+	void ShowMenu(const FInputActionValue& Value);
 
 public:
-	/** Returns CameraBoom subobject **/
+	FOnHealthChanged OnHealthChanged;
+
+	void AddHealth(int32 Value);
+	void ApplyBlind(float Duration);
+	void ApplySlow(float SlowAmount, float Duration);
+	void ApplyReverseControl(float Duration);
+
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	FORCEINLINE int32 GetHealth() const { return Health; }
+	FORCEINLINE int32 GetMaxHealth() const { return MaxHealth; }
 };
 

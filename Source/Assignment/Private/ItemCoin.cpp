@@ -15,5 +15,5 @@ void AItemCoin::ActivateItem(AActor* Activator)
 		}
 	}
 
-	DestroyItem();
+	Deactivate();
 }

@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
-#include "MyUi.h"
+#include "UiWidget.h"
+#include "MenuWidget.h"
 #include "MyHUD.generated.h"
 
 /**
@@ -20,14 +21,9 @@ protected:
 
 public:
 	UPROPERTY(EditAnywhere, Category = "UI")
-	UMyUi* MyUi;
+	UUiWidget* UiWidget;
+	UPROPERTY(EditAnywhere, Category = "UI")
+	UMenuWidget* MenuWidget;
 
-	UFUNCTION()
-	void OnWaveUpdated(int32 NewWave);
-	UFUNCTION()
-	void OnScoreUpdated(int32 NewScore);
-	UFUNCTION()
-	void OnTimeUpdated(float RemainingTime);
-	UFUNCTION()
-	void OnHealthUpdated(float NewHealth);
+	void ShowMenu();
 };

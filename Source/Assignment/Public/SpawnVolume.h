@@ -3,8 +3,8 @@
 #include "CoreMinimal.h"
 #include "ItemSpawnRow.h"
 #include "GameFramework/Actor.h"
+#include "BaseItem.h"
 #include "SpawnVolume.generated.h"
-
 class UBoxComponent;
 
 UCLASS()
@@ -24,9 +24,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
 	UDataTable* NegativeItemDataTable;
 
-	AActor * SpawnRandomItem(bool bIsSpawnPositiveItem); // 리턴 형식을 AActor* 로 변경
-
+	ABaseItem* SpawnRandomItem(bool bIsSpawnPositiveItem); // 리턴 형식을 AActor* 로 변경
 	FItemSpawnRow* GetRandomItem(UDataTable* ItemDataTable) const;
-	AActor* SpawnItem(TSubclassOf<AActor> ItemClass);
+	ABaseItem* SpawnItem(TSubclassOf<ABaseItem> ItemClass);
 	FVector GetRandomPointInVolume() const;
+	ABaseItem* GetObject(TSubclassOf<ABaseItem> ItemClass);
+	void ReturnObject(ABaseItem* Object);
+
+private:
+	TMap<TSubclassOf<ABaseItem>, TQueue<ABaseItem*>*>  ObjectPools;
 };
