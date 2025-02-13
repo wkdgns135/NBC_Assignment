@@ -12,6 +12,7 @@
 #include "InputActionValue.h"
 #include "Components/WidgetComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "MyGameState.h"
 #include "MyHUD.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -67,7 +68,7 @@ float ATP_ThirdPersonCharacter::TakeDamage(float DamageAmount, FDamageEvent cons
 	// 체력이 0 이하가 되면 사망 처리
 	if (Health <= 0.0f)
 	{
-		UGameplayStatics::OpenLevel(GetWorld(), "GameOverLevel");
+		Cast<AMyGameState>(GetWorld()->GetGameState())->OnGameOver();
 	}
 
 	// 실제 적용된 데미지를 반환

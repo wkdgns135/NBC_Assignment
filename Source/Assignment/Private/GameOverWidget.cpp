@@ -21,7 +21,7 @@ void UGameOverWidget::NativeConstruct()
 
 	if (GameInstance) {
 		int32 Score = Cast<UMyGameInstance>(GetGameInstance())->TotalScore;
-		int32 Wave = Cast<UMyGameInstance>(GetGameInstance())->CurrentWave;
+		int32 Wave = Cast<UMyGameInstance>(GetGameInstance())->CurrentWave + 1;
 
 		FString ScoreString = FString::Printf(TEXT("Wave : %d, Total Score: %d"), Wave, Score);
 		ScoreText->SetText(FText::FromString(ScoreString));

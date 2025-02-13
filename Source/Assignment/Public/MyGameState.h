@@ -47,7 +47,6 @@ public:
 	void StartWave();
 	void OnWaveTimeUp();
 	void OnTimerTick();
-	void OnCoinCollected();
 	void EndWave();
 
 private:

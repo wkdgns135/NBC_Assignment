@@ -32,7 +32,6 @@ void AMyGameState::BeginPlay()
 	OnWaveChanged.Broadcast(GameInstance->CurrentWave + 1);
 }
 
-
 void AMyGameState::AddScore(int32 Amount)
 {
 	GameInstance->TotalScore += Amount;
@@ -42,7 +41,7 @@ void AMyGameState::AddScore(int32 Amount)
 void AMyGameState::InitWave()
 {
 	TArray<FName> RowNames = WaveDataTable->GetRowNames();
-	if (RowNames.IsEmpty())return;
+	if (RowNames.IsEmpty()) return;
 	static const FString ContextString(TEXT("WaveDataContext"));
 	CurrentWaveData = WaveDataTable->FindRow<FWaveDataRow>(RowNames[GameInstance->CurrentWave], ContextString);
 }
@@ -93,38 +92,14 @@ void AMyGameState::OnTimerTick()
 	CurrentTime++;
 	OnTimeChanged.Broadcast(CurrentWaveData->WaveDuration - CurrentTime);
 
-	if (CurrentTime == CurrentWaveData->WaveDuration) {
+	if (CurrentTime == CurrentWaveData->WaveDuration)
+	{
 		OnWaveTimeUp();
 	}
-	else {
-		GetWorldTimerManager().SetTimer(
-			LevelTimerHandle,
-			this,
-			&AMyGameState::OnTimerTick,
-			1,
-			false
-		);
-	}
-}
-
-void AMyGameState::OnCoinCollected()
-{
-	CollectedCoinCount++;
-
-	UE_LOG(LogTemp, Warning, TEXT("Coin Collected: %d / %d"),
-		CollectedCoinCount,
-		SpawnedCoinCount)
-
-		if (SpawnedCoinCount > 0 && CollectedCoinCount >= SpawnedCoinCount)
-		{
-			EndWave();
-		}
 }
 
 void AMyGameState::EndWave()
 {
-	GetWorldTimerManager().ClearTimer(LevelTimerHandle);
-
 	GameInstance->CurrentWave++;
 	OnWaveChanged.Broadcast(GameInstance->CurrentWave + 1);
 
@@ -139,5 +114,8 @@ void AMyGameState::EndWave()
 
 void AMyGameState::OnGameOver()
 {
+	// Timer 종료 -> Wave 종료 Clear Timer -> 타이머 시작 
+	GetWorldTimerManager().PauseTimer(LevelTimerHandle);
+	GetWorldTimerManager().ClearTimer(LevelTimerHandle);
 	UGameplayStatics::OpenLevel(GetWorld(), "GameOverLevel");
 }
