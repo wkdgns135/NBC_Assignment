@@ -6,7 +6,7 @@
 UMyGameInstance::UMyGameInstance() 
 {
 	TotalScore = 0;
-	CurrentLevelIndex = 0;
+	CurrentWave = 0;
 }
 
 void UMyGameInstance::AddToScore(int32 Amount)

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameState.h"
 #include "WaveDataRow.h"
+#include "MyGameInstance.h"
 #include "MyGameState.generated.h"
 
 class ABaseItem;
@@ -32,13 +33,11 @@ public:
 	FOnTimeChanged OnTimeChanged;
 	FWaveDataRow* CurrentWaveData;
 	FTimerHandle LevelTimerHandle;
-	int32 CurrentWaveIndex;
-	int32 Score;
+	UMyGameInstance* GameInstance;
+
 	int32 SpawnedCoinCount;
 	int32 CollectedCoinCount;
 
-	UFUNCTION(BlueprintPure, Category = "Score")
-	int32 GetScore() const;
 	UFUNCTION(BlueprintCallable, Category = "Score")
 	void AddScore(int32 Amount);
 	UFUNCTION(BlueprintCallable, Category = "Wave")

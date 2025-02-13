@@ -2,13 +2,12 @@
 #include "Kismet/GameplayStatics.h"
 #include "SpawnVolume.h"
 #include "ItemCoin.h"
+#include "MyGameInstance.h"
 
 AMyGameState::AMyGameState()
 {
-	Score = 0;
 	SpawnedCoinCount = 0;
 	CollectedCoinCount = 0;
-	CurrentWaveIndex = 0;
 	CurrentTime = 0;
 }
 
@@ -16,7 +15,10 @@ void AMyGameState::BeginPlay()
 {
 	Super::BeginPlay();
 
-	
+	GameInstance = Cast<UMyGameInstance>(GetGameInstance());
+	GameInstance->CurrentWave = 0;
+	GameInstance->TotalScore = 0;
+
 	TArray<AActor*> FoundVolumes;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnVolume::StaticClass(), FoundVolumes);
 	if (!FoundVolumes.IsEmpty()) {
@@ -25,28 +27,24 @@ void AMyGameState::BeginPlay()
 
 	InitWave();
 	StartWave();
-	OnScoreChanged.Broadcast(Score);
-	OnWaveChanged.Broadcast(CurrentWaveIndex + 1);
+
+	OnScoreChanged.Broadcast(GameInstance->TotalScore);
+	OnWaveChanged.Broadcast(GameInstance->CurrentWave + 1);
 }
 
-int32 AMyGameState::GetScore() const
-{
-	return Score;
-}
 
 void AMyGameState::AddScore(int32 Amount)
 {
-	Score += Amount;
-	OnScoreChanged.Broadcast(Score);
+	GameInstance->TotalScore += Amount;
+	OnScoreChanged.Broadcast(GameInstance->TotalScore);
 }
 
 void AMyGameState::InitWave()
 {
 	TArray<FName> RowNames = WaveDataTable->GetRowNames();
 	if (RowNames.IsEmpty())return;
-
 	static const FString ContextString(TEXT("WaveDataContext"));
-	CurrentWaveData = WaveDataTable->FindRow<FWaveDataRow>(RowNames[CurrentWaveIndex], ContextString);
+	CurrentWaveData = WaveDataTable->FindRow<FWaveDataRow>(RowNames[GameInstance->CurrentWave], ContextString);
 }
 
 void AMyGameState::StartWave()
@@ -73,7 +71,7 @@ void AMyGameState::StartWave()
 			}
 		}
 	}
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, FString::Printf(TEXT("Wave : %d Start"), CurrentWaveIndex + 1));
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, FString::Printf(TEXT("Wave : %d Start"), GameInstance->CurrentWave + 1));
 
 	GetWorldTimerManager().SetTimer(
 		LevelTimerHandle,
@@ -127,10 +125,10 @@ void AMyGameState::EndWave()
 {
 	GetWorldTimerManager().ClearTimer(LevelTimerHandle);
 
-	CurrentWaveIndex++;
-	OnWaveChanged.Broadcast(CurrentWaveIndex + 1);
+	GameInstance->CurrentWave++;
+	OnWaveChanged.Broadcast(GameInstance->CurrentWave + 1);
 
-	if (CurrentWaveIndex >= WaveDataTable->GetRowNames().Num()) {
+	if (GameInstance->CurrentWave >= WaveDataTable->GetRowNames().Num()) {
 		OnGameOver();
 		return;
 	}

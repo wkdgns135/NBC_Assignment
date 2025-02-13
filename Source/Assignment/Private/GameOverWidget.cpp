@@ -3,6 +3,7 @@
 
 #include "GameOverWidget.h"
 #include "Kismet/GameplayStatics.h"
+#include "MyGameInstance.h"
 
 void UGameOverWidget::NativeConstruct()
 {
@@ -14,6 +15,16 @@ void UGameOverWidget::NativeConstruct()
 	{
 		Controller->bShowMouseCursor = true;
 		Controller->SetInputMode(FInputModeUIOnly());
+	}
+
+	UMyGameInstance* GameInstance = Cast<UMyGameInstance>(GetGameInstance());
+
+	if (GameInstance) {
+		int32 Score = Cast<UMyGameInstance>(GetGameInstance())->TotalScore;
+		int32 Wave = Cast<UMyGameInstance>(GetGameInstance())->CurrentWave;
+
+		FString ScoreString = FString::Printf(TEXT("Wave : %d, Total Score: %d"), Wave, Score);
+		ScoreText->SetText(FText::FromString(ScoreString));
 	}
 }
 
