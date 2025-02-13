@@ -26,7 +26,7 @@ void AItemMine::ActivateItem(AActor* Activator)
 
 	Super::ActivateItem(Activator);
 
-	GetWorld()->GetTimerManager().SetTimer(
+	GetWorldTimerManager().SetTimer(
 		ExplosionTimerHandle,
 		this,
 		&AItemMine::Explode,
@@ -73,13 +73,16 @@ void AItemMine::Explode()
 
 	if (Particle)
 	{
+		TWeakObjectPtr<UParticleSystemComponent> WeakParticle(Particle);
 		FTimerHandle DestroyParticleTimerHandle;
 
 		GetWorld()->GetTimerManager().SetTimer(
 			DestroyParticleTimerHandle,
-			[Particle]()
+			[WeakParticle]()
 			{
-				Particle->DestroyComponent();
+				if (WeakParticle.IsValid()) {
+					WeakParticle->DestroyComponent();
+				}
 			},
 			2.0f,
 			false

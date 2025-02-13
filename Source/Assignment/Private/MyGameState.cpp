@@ -77,7 +77,7 @@ void AMyGameState::StartWave()
 		this,
 		&AMyGameState::OnTimerTick,
 		1,
-		false
+		true
 	);
 }
 
@@ -115,7 +115,6 @@ void AMyGameState::EndWave()
 void AMyGameState::OnGameOver()
 {
 	// Timer 종료 -> Wave 종료 Clear Timer -> 타이머 시작 
-	GetWorldTimerManager().PauseTimer(LevelTimerHandle);
 	GetWorldTimerManager().ClearTimer(LevelTimerHandle);
 	UGameplayStatics::OpenLevel(GetWorld(), "GameOverLevel");
 }
