@@ -21,5 +21,5 @@
 ## UI 설명
 ![image](https://github.com/user-attachments/assets/02e2470d-f443-45f2-8c64-c9c6795dd5bc)
 
-## Text Submit 과정
+## Number Submit 과정 (GIF)
 ![GIF 25-03-20(목) 오후 4-00-34](https://github.com/user-attachments/assets/d712c816-989b-4ef8-ac52-d69572ae92ec)
