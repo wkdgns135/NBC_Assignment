@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "GameWidget.generated.h"
 
+class UHorizontalBox;
 class UTextBlock;
 class UButton;
 
@@ -27,9 +28,17 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* OtherNumText;
 	UPROPERTY(meta = (BindWidget))
+	UTextBlock* ResultText;
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* GameResultText;
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* TimerText;
+	UPROPERTY(meta = (BindWidget))
 	UButton* SubmitButton;
 	UPROPERTY(meta = (BindWidget))
 	UButton* BackspaceButton;
+	UPROPERTY(meta = (BindWidget))
+	UHorizontalBox* RemainTurnBox;
 	UPROPERTY(meta = (BindWidget))
 	UButton* NumButton1;
 	UPROPERTY(meta = (BindWidget))
@@ -53,10 +62,19 @@ private:
 
 public:
 	virtual void NativeConstruct() override;
-	void UpdateOtherNum(const FText &Text);
-	void UpdateOtherNum(const FString &String);
+	void InitializeWidget();
+	void UpdateOtherPlayerNum(const FText &Text);
+	void UpdateOtherPlayerNum(const FString &String);
 	void UpdatePlayerNum(const FText &Text);
 	void UpdatePlayerNum(const FString &String);
+	void UpdateResultText(const int32 &StrikeCount, const int32 &BallCount);
+	void UpdateRemainTurn(const int32 &RemainTurn);
+	void DisableButtons();
+	void EnableButtons();
+	void InitializePlayerNum();
+	void UpdateGameResultText(const FText &Text);
+	void UpdateGameResultText(const FString &Text);
+	void UpdateTimerText(const int32 &RemainTime);
 	
 private:
 	UFUNCTION()
