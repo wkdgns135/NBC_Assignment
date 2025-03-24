@@ -1,0 +1,7 @@
+{
+	"OutputFiles": [
+		"..\\..\\..\\x64\\UnrealGame\\Development\\MyIDPlugin\\Module.MyIDPlugin.cpp.obj",
+		"..\\..\\..\\x64\\UnrealGame\\Development\\MyIDPlugin\\MyIDPlugin.cpp.obj",
+		"..\\..\\..\\x64\\UnrealGame\\Development\\MyIDPlugin\\MyIDPluginBPLibrary.cpp.obj"
+	]
+}
