@@ -13,16 +13,16 @@ class ASSIGNMENT_API ARotationActor : public ADynamicActor
 public:	
 	ARotationActor();
 	virtual void Tick(float DeltaTime) override;
+	void Init(const bool bInRotateRight, const float Speed);
 
 protected:
 	virtual void BeginPlay() override;
 
 private:
-	UPROPERTY(EditAnywhere, Category = "Properties") bool bRotateRight;
-	UPROPERTY(EditAnywhere, Category = "Properties") float RotationSpeed;
-
 	void ActorRotation(float DeltaTime);
 
-public:
-	void Init(const bool bRotateRight, const float Speed);
+private:
+	UPROPERTY(EditAnywhere, Category = "Properties") bool bRotateRight;
+	UPROPERTY(EditAnywhere, Category = "Properties") float RotationSpeed;
+	
 };

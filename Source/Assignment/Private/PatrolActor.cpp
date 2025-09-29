@@ -10,7 +10,7 @@ APatrolActor::APatrolActor()
 		StaticMeshComponent->SetStaticMesh(MeshAsset.Object);
 	}
 
-	PatrolDirection = EDirection::Forward;
+	PatrolDirection = EDirection::EForward;
 	PatrolSpeed = 1000;
 	PatrolRange = 1000;
 }
@@ -24,15 +24,15 @@ void APatrolActor::BeginPlay()
 FVector APatrolActor::GetDirection()
 {
 	if (TotalMoveDistance >= PatrolRange) {
-		PatrolDirection = (EDirection)(((int)PatrolDirection + 2) % 4);
+		PatrolDirection = StaticCast<EDirection>((PatrolDirection + 2) % 4);
 		TotalMoveDistance = 0;
 	}
-	return MovementOffsets[(int)PatrolDirection];
+	return MovementOffsets[PatrolDirection];
 }
 
 void APatrolActor::Patrol(const float DeltaTime)
 {
-	FVector MovementDelta = GetDirection() * PatrolSpeed * DeltaTime;
+	const FVector MovementDelta = GetDirection() * PatrolSpeed * DeltaTime;
 	AddActorLocalOffset(MovementDelta);
 	TotalMoveDistance += MovementDelta.Length();
 }

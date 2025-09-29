@@ -1,24 +1,18 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "ActorGenerator.h"
 #include "PatrolActor.h"
 #include "RotationActor.h"
 
-// Sets default values
 AActorGenerator::AActorGenerator()
 {
-    // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
     PrimaryActorTick.bCanEverTick = true;
 }
 
-// Called when the game starts or when spawned
 void AActorGenerator::BeginPlay()
 {
     Super::BeginPlay();
     GenerateActor();
 }
 
-// Called every frame
 void AActorGenerator::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
@@ -39,7 +33,7 @@ void AActorGenerator::GenerateActor()
     }
     else
     {
-        GenerateActor(); // °æ·Î¸¦ ¸øÃ£À¸¸é Àç±Í
+        GenerateActor(); // ï¿½ï¿½Î¸ï¿½ ï¿½ï¿½Ã£ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
     }
 }
 
@@ -50,13 +44,12 @@ void AActorGenerator::InitializeGrid(TArray<TArray<TPair<EDirection, int>>>& Gri
     for (int i = 0; i < Height; i++) {
         TArray<TPair<EDirection, int>> Row;
         for (int j = 0; j < Width; j++) {
-            int Rand = FMath::RandRange(0, 3);
-            switch (Rand)
+            switch (int Rand = FMath::RandRange(0, 3))
             {
-            case 0: Row.Add({ EDirection::Forward, FMath::RandRange(0, FMath::Min(Height - i - 1, MinPatrolRange)) }); break;
-            case 1: Row.Add({ EDirection::Backward, FMath::RandRange(0, FMath::Min(i, MinPatrolRange)) }); break;
-            case 2: Row.Add({ EDirection::Right, FMath::RandRange(0, FMath::Min(Width - j - 1, MinPatrolRange)) }); break;
-            case 3: Row.Add({ EDirection::Left, FMath::RandRange(0, FMath::Min(j, MinPatrolRange)) }); break;
+            case 0: Row.Add({ EForward, FMath::RandRange(0, FMath::Min(Height - i - 1, MinPatrolRange)) }); break;
+            case 1: Row.Add({ EBackward, FMath::RandRange(0, FMath::Min(i, MinPatrolRange)) }); break;
+            case 2: Row.Add({ ERight, FMath::RandRange(0, FMath::Min(Width - j - 1, MinPatrolRange)) }); break;
+            case 3: Row.Add({ ELeft, FMath::RandRange(0, FMath::Min(j, MinPatrolRange)) }); break;
             }
         }
         Grid.Add(Row);
@@ -80,25 +73,25 @@ void AActorGenerator::SetupGraph(TArray<TArray<TPair<EDirection, int>>>& Grid, T
                 };
 
             switch (Node.Key) {
-            case EDirection::Forward:
-                AddNeighbor(y + Node.Value + 1, x, EDirection::Backward);
-                AddNeighbor(y + Node.Value, x + 1, EDirection::Left);
-                AddNeighbor(y + Node.Value, x - 1, EDirection::Right);
+            case EDirection::EForward:
+                AddNeighbor(y + Node.Value + 1, x, EBackward);
+                AddNeighbor(y + Node.Value, x + 1, ELeft);
+                AddNeighbor(y + Node.Value, x - 1, ERight);
                 break;
-            case EDirection::Backward:
-                AddNeighbor(y - Node.Value - 1, x, EDirection::Forward);
-                AddNeighbor(y - Node.Value, x + 1, EDirection::Left);
-                AddNeighbor(y - Node.Value, x - 1, EDirection::Right);
+            case EDirection::EBackward:
+                AddNeighbor(y - Node.Value - 1, x, EForward);
+                AddNeighbor(y - Node.Value, x + 1, ELeft);
+                AddNeighbor(y - Node.Value, x - 1, ERight);
                 break;
-            case EDirection::Right:
-                AddNeighbor(y, x + Node.Value + 1, EDirection::Left);
-                AddNeighbor(y + 1, x + Node.Value, EDirection::Backward);
-                AddNeighbor(y - 1, x + Node.Value, EDirection::Forward);
+            case EDirection::ERight:
+                AddNeighbor(y, x + Node.Value + 1, ELeft);
+                AddNeighbor(y + 1, x + Node.Value, EBackward);
+                AddNeighbor(y - 1, x + Node.Value, EForward);
                 break;
-            case EDirection::Left:
-                AddNeighbor(y, x - Node.Value - 1, EDirection::Right);
-                AddNeighbor(y + 1, x - Node.Value, EDirection::Backward);
-                AddNeighbor(y - 1, x - Node.Value, EDirection::Forward);
+            case EDirection::ELeft:
+                AddNeighbor(y, x - Node.Value - 1, ERight);
+                AddNeighbor(y + 1, x - Node.Value, EBackward);
+                AddNeighbor(y - 1, x - Node.Value, EForward);
                 break;
             }
 
@@ -232,11 +225,11 @@ void AActorGenerator::GenerateActor()
             Neighbors.Push({ YY, XX });
         }
 
-        bool bGenerated = false; // ·£´ý »ý¼º ¿©ºÎ È®ÀÎ
+        bool bGenerated = false; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
         TPair<int, int> BestNeighbor;
         float MaxProba = -1.0f;
 
-        // È®·ü °è»ê
+        // È®ï¿½ï¿½ ï¿½ï¿½ï¿½
         for (TPair<int, int>& Neighbor : Neighbors) {
             float Proba = 0;
             for (int i = 0; i < 4; i++) {
@@ -251,19 +244,19 @@ void AActorGenerator::GenerateActor()
         
         for (TPair<int, int>& Neighbor : Neighbors) {
             float Rand = FMath::FRand();
-            if (Rand < Grid[Neighbor.Key][Neighbor.Value] * Density * Density) { // È®·ü ºñ±³
+            if (Rand < Grid[Neighbor.Key][Neighbor.Value] * Density * Density) { // È®ï¿½ï¿½ ï¿½ï¿½
                 Stack.Push(Neighbor);
                 bGenerated = true;
             }
 
-            // °¡Àå ³ôÀº Proba¸¦ °¡Áø ÀÌ¿ô ÀúÀå
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Probaï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ ï¿½ï¿½ï¿½ï¿½
             if (Grid[Neighbor.Key][Neighbor.Value] > MaxProba) {
                 MaxProba = Grid[Neighbor.Key][Neighbor.Value];
                 BestNeighbor = Neighbor;
             }
         }
 
-        // ·£´ý »ý¼º ½ÇÆÐ ½Ã °¡Àå ³ôÀº Proba ÀÌ¿ô Ãß°¡
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Proba ï¿½Ì¿ï¿½ ï¿½ß°ï¿½
         if (!bGenerated && MaxProba > 0) {
             Grid[BestNeighbor.Key][BestNeighbor.Value] = 1;
             Stack.Push(BestNeighbor);

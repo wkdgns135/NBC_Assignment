@@ -25,9 +25,9 @@ void ARotationActor::ActorRotation(float DeltaTime)
 	AddActorLocalRotation(DeltaRotation);
 }
 
-void ARotationActor::Init(const bool RotateRight, const float Speed)
+void ARotationActor::Init(const bool bInRotateRight, const float Speed)
 {
-	bRotateRight = RotateRight;
+	bRotateRight = bInRotateRight;
 	RotationSpeed = Speed;
 }
 

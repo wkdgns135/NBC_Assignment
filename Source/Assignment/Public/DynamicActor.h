@@ -14,7 +14,6 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(VisibleAnywhere) USceneComponent* SceneRoot;
-	UPROPERTY(EditAnywhere) UStaticMeshComponent* StaticMeshComponent;
-
+	UPROPERTY(VisibleAnywhere) TObjectPtr<USceneComponent> SceneRoot;
+	UPROPERTY(EditAnywhere) TObjectPtr<UStaticMeshComponent> StaticMeshComponent;
 };
